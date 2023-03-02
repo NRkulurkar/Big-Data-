@@ -1,0 +1,43 @@
+show DATABASES;
+
+use mysql;
+--- sql query to get working hrs of employee per week
+create table if not exists employee(
+    id INT,
+    Name VARCHAR(20),
+    date DATE,
+    wor_hr TIME
+);
+
+drop table employee;
+
+insert into employee VALUES
+(1,'Nav','2022-05-02','08:05:00'),
+(1,'Nav','2022-05-03','08:05:00'),
+(1,'Nav','2022-05-04','08:05:00'),
+(1,'Nav','2022-05-05','08:05:00'),
+(1,'Nav','2022-05-06','08:05:00'),
+(1,'Nav','2022-05-09','08:05:00'),
+(1,'Nav','2022-05-10','08:05:00'),
+(1,'Nav','2022-05-11','08:05:00'),
+(1,'Nav','2022-05-12','08:05:00'),
+(1,'Nav','2022-05-13','08:05:00'),
+(2,'Ash','2022-05-02','08:05:00'),
+(2,'Ash','2022-05-03','08:05:00'),
+(2,'Ash','2022-05-04','08:05:00'),
+(2,'Ash','2022-05-05','08:05:00'),
+(2,'Ash','2022-05-06','08:05:00'),
+(2,'Ash','2022-05-09','08:05:00'),
+(2,'Ash','2022-05-10','08:05:00'),
+(2,'Ash','2022-05-11','08:05:00'),
+(2,'Ash','2022-05-12','08:05:00'),
+(2,'Ash','2022-05-13','08:05:00');
+
+select * from employee;
+
+select Name, WEEKOFYEAR(date) as week,
+SEC_TO_TIME(SUM(TIME_TO_SEC(wor_hr))) AS total_time from employee
+GROUP BY Name, WEEKOFYEAR(date);
+
+
+
