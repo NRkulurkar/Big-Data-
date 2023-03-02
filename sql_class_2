@@ -1,0 +1,36 @@
+create DATABASE class_2;
+
+use class_2;
+
+create table if not exists employee
+(
+    id int,
+    name varchar(30),
+    address VARCHAR(30),
+    city VARCHAR(30)
+);
+
+insert into employee VALUES
+(1,'Nav','Pardi','Ngp');
+ 
+ --- Add new column ---
+alter Table employee add DOB DATE;
+
+show DATABASES;
+
+select * from employee;
+--- modify column datatype
+alter table employee modify COLUMN
+name VARCHAR(50);
+
+--- delete existing column from given table or remove city column from employee table ---
+alter table employee drop column city;
+
+--- change the column name name to full_name ---
+Alter table employee rename column name to full_name;
+
+--- add unique integrity constraint on id column ---
+alter table employee add constraint id_unique UNIQUE(id);
+
+--- drop constraint from existing table ---
+alter table employee drop constraint id_unique;
