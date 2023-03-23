@@ -1,0 +1,31 @@
+*** Count Null Values ***
+null_counts = df.select([sum(isNull(c)).alias(c) for c in df.columns]).collect()[0]
+
+# print the results
+for col, count in null_counts.asDict().items():
+    print(f"{col}: {count}")
+    
+ # describe command
+ summary=df_case.describe()
+ 
+# Group by and order by
+df_dup=df_case.groupBy("province").agg(count('*').alias("count")).orderBy(desc("count"))
+
+# to use filter 
+ df_dup.filter(df_dup.counts>20).show()
+ 
+ # dropDuplicates using specific column name
+ df_region.dropDuplicates(['province']).show()
+ 
+ # use of limit in pyspark
+  df_case.limit(2).show()
+  
+  # Change column name
+   df_case.withColumnRenamed("city","Cities")
+   
+   # Logical operator 
+   df_case.filter((df_case.province=="Daegu") & (df_case.confirmed > 10)).show()
+   
+   
+  # use cast() to change data type
+   df_case.withColumn("latitude",col("latitude").cast("double"))
