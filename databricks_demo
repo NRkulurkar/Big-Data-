@@ -46,4 +46,28 @@ ls /output/result/Day=31/
 df=df.withColumn("Vendor_name",when(col("VendorID")=='1',"A")
                 .when(col("VendorID")=='2',"B"))
 
- 
+parqDf=spark.read.option("header",True).parquet("/output/result")
+
+parqDf.createOrReplaceTempView("taxi")
+
+# sql query to get total number of passengers for each vendors
+df_sql=spark.sql("select VendorID,sum(passenger_count) as total_passenger from taxi group by VendorID")
+
+#sql query to get total amount for each payment method for every Vendor
+df_pay=spark.sql("select Vendor_name, payment_method ,sum(total_amount) as total_amount from taxi group by Vendor_name,payment_method order by Vendor_name").show()
+
+# sql query to get column having total amount by Cash and by online method for each Vendor
+df_pay_mode=spark.sql("select Vendor_name, sum(case when payment_method='Cash' then total_amount else 0 end)as Cash_Amount,sum(case when payment_method in('DebitCard','UPI','CreditCard','E-Bank') then total_amount else 0 end)as Online_Amount from taxi group by Vendor_name").show()
+
+
+# find out duration of each trip
+duration_seconds=(unix_timestamp(col("tpep_dropoff_datetime"))-unix_timestamp(col("tpep_pickup_datetime")))
+# add a new column to the DataFrame with the duration in minutes
+
+duration_time=from_unixtime(duration_seconds,"HH:mm:ss")
+
+parqDf=parqDf.withColumn("duration_time",duration_time)
+
+parqDf=parqDf.withColumn("duration_time",col("duration_time").cast("timestamp"))
+
+
