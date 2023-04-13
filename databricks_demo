@@ -71,3 +71,11 @@ parqDf=parqDf.withColumn("duration_time",duration_time)
 parqDf=parqDf.withColumn("duration_time",col("duration_time").cast("timestamp"))
 
 
+# convert pyspark df to pandas df and plot it in matplotlib
+
+# convert pyspark df to pandas df
+panda_df=df_sql.toPandas()
+panda_df.plot.bar(x="VendorID",y="total_passenger",rot=90)
+plt.show()
+
+
