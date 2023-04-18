@@ -1,3 +1,29 @@
 # use of regexp_replace
 df.withColumn("Name_of_Company",regexp_replace(df.Name_of_Company,'Co.','Corporation')).select("Name_of_Company").show(truncate=False)
 
+# use regexp_replace with when condition
+
+df.withColumn("Name_of_Company",when(df.Name_of_Company.endswith("Inc."),regexp_replace(df.Name_of_Company,"Inc","Incorporation"))
+.otherwise(df.Name_of_Company))
+.select("Name_of_Company").show(truncate=False)
+
+# trim whitespace
+df=df.withColumn("Location",(trim("Location")))
+
+# replace column values using map and dictionary
+Dict_loc={"Australia":"Aus","Russia":"Russ","United States":"US","Japan":"JAP","Germany":"GER","Netherlands":"NETH","France":"FR","China":"CH","Spain":"SP","United Kingdom":"UK","Hong Kong SAR":"HKR","Canada":"CAN","Vietnam":"VIET","South Africa":"SA","Austria":"AUST","Portugal":"POR","Brazil":"BR","United Arab Emirates":"UAE","Switzerland":"SWITZ","Indonesia":"INDO","Mexico":"MEX","South Korea":"SK","Israel":"ISR","Ukraine":"UK","Thailand":"Thai","Denmark":"Den","Norway":"Nor","Lithuania":"Lith","Italy":"It","Chile":"Chil","India":"Ind","Finland":"Fin","Belgium":"Bel","Africa":"Af","Greece":"Gr","Turkey":"Tur","Philippines":"Phil","Sweden":"Swd"}
+df1=df.rdd.map(lambda x: (x.Rank,x.Name_of_Company,Dict_loc[x.Location])).toDF(["Rank","Noc","State"])
+df1=df.rdd.map(lambda x: (x.Rank,x.Name_of_Company,Dict_loc[x.Location])).toDF(["Rank","Noc","State"])
+
+# use of Translate
+df.withColumn("Rank",translate('Rank',"1234","ABCD")).select("Rank").show()
+
+# replace null values with 0
+df.na.fill(value=0).show()
+
+# use subset
+df.na.fill(value=0,subset=["FY2021_retail_revenue"]).show()
+
+# use overlay
+df.select(overlay("Location","Name_of_Company",7)).show()
+to replace a substring from one column with other column
