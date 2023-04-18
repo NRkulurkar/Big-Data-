@@ -1,0 +1,3 @@
+# use of regexp_replace
+df.withColumn("Name_of_Company",regexp_replace(df.Name_of_Company,'Co.','Corporation')).select("Name_of_Company").show(truncate=False)
+
