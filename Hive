@@ -1,0 +1,327 @@
+*** Hive ***
+
+External Table
+
+create external table theftt1(name string,add string)
+fields terminated by ','
+location "/user/hive1"
+
+
+set hive.cli.print.header =true
+
+STATIC PARTITIONING
+set hive.mapred.mode=strict
+
+create table sales_data_static_part
+(
+ordernumber int,
+quantity int,
+sales float,
+year_id int
+)
+partitioned by (country string);
+
+load data local inpath " " partition (country="America")
+
+or 
+
+insert overwrite table sales_data_static_part partition (country="USA")
+select ordernumber,quantity,sales,year_id from sales_order_data_orc where country = "USA";
+
+DYNAMIC PARTITION 
+
+set hive.exec.dynamic.partition=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+create table sales_data_dynamic_part
+(
+ordernumber int,
+quantityordered int,
+sales float,
+year_id int
+)
+paritioned by (country string);
+
+insert overwrite table sales_data_dynamic_part partition(country)
+select ordernumber,quantityorderd, sales,year_id,country from sales_order_data_orc;
+
+DYNAMIC PARTITION ON EXTERNAL TABLE
+
+CREATE EXTERNAL TABLE sales (
+  id INT,
+  product STRING,
+  sale_date STRING,
+  sale_amount FLOAT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/my/external/table/location';
+
+
+Create a new partitioned table
+CREATE EXTERNAL TABLE sales_partitioned (
+  id INT,
+  product STRING,
+  sale_amount FLOAT
+)
+PARTITIONED BY (year INT, month INT)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/my/external/table/partitioned_location';
+
+-- Insert the data into the partitioned table with dynamic partitioning
+INSERT INTO TABLE sales_partitioned
+PARTITION (year, month)
+SELECT id, product, sale_amount, year(sale_date), month(sale_date)
+FROM sales;
+
+-- Query sales data for January 2023
+SELECT * FROM sales_partitioned WHERE year = 2023 AND month = 1;
+
+
+-- Create a new partitioned table partitioned by product
+CREATE EXTERNAL TABLE sales_partitioned (
+  id INT,
+  sale_amount FLOAT,
+  year INT,
+  month INT
+)
+PARTITIONED BY (product STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/my/external/table/partitioned_location';
+
+-- Insert the data into the partitioned table with dynamic partitioning
+INSERT INTO TABLE sales_partitioned
+PARTITION (product)
+SELECT id, sale_amount, year(sale_date), month(sale_date), product
+FROM sales;
+
+
+-- Query sales data for product 'A'
+SELECT * FROM sales_partitioned WHERE product = 'A';
+
+**** STATIC PARTITIONING ON HIVE TABLE ****
+
+CREATE EXTERNAL TABLE sales (
+  id INT,
+  product STRING,
+  sale_date STRING,
+  sale_amount FLOAT
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/my/external/table/location';
+
+
+-- Create a new partitioned table
+CREATE EXTERNAL TABLE sales_partitioned (
+  id INT,
+  product STRING,
+  sale_amount FLOAT
+)
+PARTITIONED BY (year INT, month INT)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+LOCATION '/my/external/table/partitioned_location';
+
+-- Insert the data into the partitioned table with static partitioning
+INSERT OVERWRITE TABLE sales_partitioned
+PARTITION (year=2022, month=1)
+SELECT id, product, sale_amount
+FROM sales
+WHERE year(sale_date) = 2022 AND month(sale_date) = 1;
+
+INSERT OVERWRITE TABLE sales_partitioned
+PARTITION (year=2022, month=2)
+SELECT id, product, sale_amount
+FROM sales
+WHERE year(sale_date) = 2022 AND month(sale_date) = 2;
+
+-- Repeat the INSERT statement for each partition value
+-- ...
+
+-- Refresh the partition metadata
+ALTER TABLE sales_partitioned RECOVER PARTITIONS;
+
+
+
+
+
+
+SERDE OPERATIONS
+create table csv_table
+(
+name string,
+location string
+)
+row format serde
+'org.apache.hadoop.hive.serde2.opencsvserde'
+with serdeproperties
+(
+"separatorChar"=","
+"quoteChar"="\""
+"escapechar"="\\"
+)
+stored as textfile
+
+JSON SERDE
+create table json_table
+(
+name string,
+id int,
+skills array<string>
+)
+row format serde "org.apache.hive.hcatalog.data.jsonserde"
+stored as textfile;
+
+
+**** READ UDF *****
+BUCKETING
+
+create table users(
+id int,
+name string
+)
+row format delimited,
+fields terminated by ','
+lines terminated by '/n'
+stored as textfile
+
+create table users_buck(
+id int,
+name string
+)
+clustered by (id)
+sorted by (id)
+into 3 bunckets;
+
+set hive.enforce.bucketing=true;
+insert overwrite table buck_users select * from users;
+
+JOINS
+1. Reduce side join
+2. Map side join
+3. Bucket map join
+4. sorted merge bucket map join 
+
+select * from user_buck u 
+inner join
+location_buck l
+on u.id = l.id;
+
+Reduce side join
+set hive.auto.convert.join=false
+
+Map side join 
+set hive.auto.convert.join=true
+
+Bucket map join
+set hive.auto.convert.join=true;
+set hive.optimize.bucketmapjoin=true;
+
+SORTED MERGE BUCKET MAP JOIN
+set hive.enforce.sortmergebucketmapjoin=false
+set hive.auto.covert.sortmerge.join=true;
+set hive.optimize.bucketmapjoin=true;
+set hive.optimize.bucketmapjoin.sortedmerge=true;
+
+
+*** INDEXING IN HIVE ****
+
+In Hive, indexing is a technique used to improve the performance of queries that involve filtering or sorting data based on specific columns.
+
+CREATE INDEX salary_index ON employees(salary);
+
+Once an index is created, it can be used by Hive's query optimizer to speed up queries that filter or sort based on the indexed columns. However,
+ indexes can also add overhead to insert, update, and delete operations, so it's important to consider the tradeoffs when deciding whether to use indexes in Hive.
+
+SELECT name, salary
+FROM employees
+USE INDEX (salary_index)
+WHERE salary > 50000;
+
++----+-------+--------+------------+
+| id | name  | salary | department |
++----+-------+--------+------------+
+|  1 | John  |  50000 | IT         |
+|  2 | Mary  |  75000 | Finance    |
+|  3 | Alice |  60000 | Marketing  |
+|  4 | Bob   |  60000 | IT         |
+|  5 | Jane  |  90000 | Finance    |
++----+-------+--------+------------+
+
++--------+-------+
+| salary | rowid |
++--------+-------+
+|  50000 |     1 |
+|  60000 |     3 |
+|  60000 |     4 |
+|  75000 |     2 |
+|  90000 |     5 |
++--------+-------+
+
+
+Here are a few types of indexing techniques that can be used in Hive:
+
+Bitmap Indexing:
+Hive supports bitmap indexing on columns with low cardinality, similar to other database systems.
+ Bitmap indexes in Hive are created using the BITMAP keyword in the CREATE INDEX statement.
+
+B-Tree Indexing:
+Hive supports B-tree indexing for partitioned and non-partitioned tables. 
+B-tree indexes are created using the INDEX keyword in the CREATE TABLE statement. B-tree indexes in Hive are stored separately from the table data
+ and are created on a single column.
+
+Partition Indexing:
+Hive supports indexing on partition columns, which is useful for partition pruning. 
+Partition indexes in Hive are created using the INDEX keyword in the ALTER TABLE statement.
+
+CREATE TABLE sales (
+  id INT,
+  date STRING,
+  amount DOUBLE
+)
+PARTITIONED BY (country STRING, city STRING);
+
+ALTER TABLE sales ADD INDEX (date) PARTITION (country='USA');
+
+SELECT * FROM sales WHERE date >= '2022-01-01' AND country = 'USA';
+
+*** BITMAP INDEXING ****
+
+CREATE INDEX idx_gender ON customer (gender) AS 'BITMAP';
+
+SELECT * FROM customer WHERE gender = 'M';
+
+In general, partitioning is more effective when the data is naturally partitionable and queries filter on the partitioning columns, while indexing is more effective 
+when the data has high cardinality and queries filter on non-partitioning columns.
+
+It's worth noting that partitioning and indexing can also be used together to further optimize query performance. 
+For example, a table can be partitioned by time and also have an index on a customer ID column, allowing for fast queries on both dimensions.
+
+*** How to Connect Spark to Remote Hive ****
+
+import org.apache.spark.sql.SparkSession
+
+// Create Spark Session with Hive enabled
+val spark = SparkSession.builder().master("local[*]")
+    .appName("SparkByExamples.com")
+    .config("hive.metastore.uris", "thrift://192.168.1.190:9083")
+    .config("spark.sql.warehouse.dir","/users/hive/warehouse")
+    .enableHiveSupport()
+    .getOrCreate()
+
+import spark.implicits._
+
+// Create DataFrame
+val sampleDF = Seq((1, "James",30,"M"),
+    (2, "Ann",40,"F"), (3, "Jeff",41,"M"),
+    (4, "Jennifer",20,"F")
+    ).toDF("id", "name","age","gender")
+
+// Create Database
+spark.sql("CREATE DATABASE IF NOT EXISTS emp")
+
+// Create Hive Internal table
+sampleDF.write.mode(SaveMode.Overwrite)
+    .saveAsTable("emp.employee")
