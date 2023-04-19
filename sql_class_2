@@ -34,3 +34,7 @@ alter table employee add constraint id_unique UNIQUE(id);
 
 --- drop constraint from existing table ---
 alter table employee drop constraint id_unique;
+
+---USE OF DATE_ADD
+SELECT DATE_ADD("2017-06-15", INTERVAL 10 DAY); 
+DATE_ADD(date, INTERVAL value addunit)
