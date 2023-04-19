@@ -24,3 +24,35 @@ with cte as(
     select distinct num as ConsecutiveNums from cte where (num=num1) and (num=num2)
     
     
+ #############Write an SQL query to find all dates' Id with higher temperatures compared to its previous dates (yesterday).
+
+Return the result table in any order.#######################
+
+Select w1.id from Weather w1
+join Weather w2
+on w1.recordDate = Date_Add(w2.recordDate, interval 1 Day)
+where w1.temperature>w2.temperature
+
+## CountDistinct ####
+df.select(countDistinct("Location")).show()
+
+### Get Schema in json format ####
+print(df.schema.json())
+
+load the json file and use it to create a DataFrame.
+
+import json
+schemaFromJson = StructType.fromJson(json.loads(schema.json))
+df3 = spark.createDataFrame(
+        spark.sparkContext.parallelize(structureData),schemaFromJson)
+df3.printSchema()
+
+
+
+
+
+
+
+
+    
+    
