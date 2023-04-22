@@ -78,6 +78,23 @@ a1 left join Activity a2 on a1.player_id=a2.player_id and a1.first_Login=a2.even
 
 
 
+##### id is the primary key column for this table.
+Each row of this table indicates the name of an employee, their department, and the id of their manager.
+If managerId is null, then the employee does not have a manager.
+No employee will be the manager of themself.Write an SQL query to report the managers with at least five direct reports.
+
+Return the result table in any order.  ############
+select a.manager_name as name from
+# (SELECT m.name AS manager_name, COUNT(*) AS num_reports
+# FROM Employee e
+# JOIN Employee m ON e.managerId = m.id
+# WHERE e.managerId IS NOT NULL
+# GROUP BY m.name
+# HAVING COUNT(*) >= 5
+# )a
+
+
+
 
 
 
