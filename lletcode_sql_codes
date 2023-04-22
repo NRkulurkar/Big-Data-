@@ -48,6 +48,33 @@ df3 = spark.createDataFrame(
 df3.printSchema()
 
 
+Write a SQL query to find the cancellation rate of requests with unbanned users (both client and driver must not be banned) 
+each day between "2013-10-01" and "2013-10-03". Round Cancellation Rate to two decimal points.
+
+Return the result table in any order.
+
+select t.request_at as Day , round(
+    sum(
+        case
+        when t.status='completed' then 0 else 1
+        end
+    )/count(*),2) as 'Cancellation Rate'
+
+from Trips t inner join Users u on t.client_id=u.users_id and u.banned ='No'
+inner join Users u1 on t.driver_id = u1.users_id and u1.banned='No'
+where t.request_at between '2013-10-01' and '2013-10-03' 
+group by t.request_at
+order by Day
+
+
+###########Write an SQL query to report the fraction of players that logged in again on the day after the day they first logged in,
+rounded to 2 decimal places. In other words, you need to count the number of players that
+logged in for at least two consecutive days starting from their first login date, then divide that number by the total number of players. ##########
+
+
+select round(count(a2.player_id)/count(a1.player_id),2) as fraction
+from (select player_id, min(event_date) as first_Login from Activity  group by player_id)
+a1 left join Activity a2 on a1.player_id=a2.player_id and a1.first_Login=a2.event_date-1
 
 
 
